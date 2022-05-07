@@ -5,29 +5,45 @@
     <body>
         <canvas id="GameCanvas" width="1400" height="750" style="border: 1px solid black;"></canvas>
     </body>
-    <div id="usercounter">Score: 0</div>
+    <div id="score_board">Score: 0</div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         const canvas = document.getElementById("GameCanvas");
-        usercounter = document.getElementById("usercounter");
-        let usercountertext = document.createElement("p");
+        score_board = document.getElementById("score_board");
+        let score_txt = document.createElement("p");
         var foodrect = canvas.getContext("2d");
-        var food_x = 0; var food_y = 0; var score = 0;
+        var food_x = 0; var food_y = 0; var score = 0; var food_oldx = 0; var food_oldy = 0;
 
         socket.on("Spawn_food_f", (x, y) => {
-            console.log(x, y);
+            console.log(x, y, food_oldx, food_oldy);
+            foodrect.clearRect(food_oldx, food_oldy, 50, 50);
             food_x = x; food_y = y;
             foodrect.fillStyle = "rgb(0, 0, 0)";
-            foodrect.fillRect(x, y, 10, 10);
+            foodrect.fillRect(x, y, 50, 50);
+            food_oldx = x; food_oldy = y;
+        }); 
+        socket.on("Delete_Food", (socketid, score, food_x, food_y) => {
+            console.log(socketid, score, food_x, food_y);
+            foodrect.clearRect(food_oldx, food_oldy, 50, 50);
+            if (socket.id === socketid){
+                score_board.style.color = "#3bf563";
+                score_board.innerHTML = socketid + " " + score;
+            } else {
+                score_board.style.color = "#f53b3b";
+                score_board.innerHTML = socketid + " " + score;
+            }
+            food_x, food_y = null;
         });
 
         canvas.addEventListener("click", function(e) {
             console.log(e.offsetX, e.offsetY);
-            if ((e.offsetX > food_x) && (e.offsetX < food_x+10) &&
-                (e.offsetY > food_y) && (e.offsetY < food_y+10)) {
-                    score = score + 1;
-                    socket.emit("Food_Clicked", score, food_x, food_y);
+            if ((e.offsetX > food_x) && (e.offsetX < food_x+50) &&
+                (e.offsetY > food_y) && (e.offsetY < food_y+50)) {
+                    if (food_x =! null) {
+                        score = score + 1;
+                        socket.emit("Food_Clicked", score, food_x, food_y);
+                    }
                 }
         }, false);
     </script>
