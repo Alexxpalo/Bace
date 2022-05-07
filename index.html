@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    </head>
+    <body>
+        <canvas id="GameCanvas" width="1400" height="750" style="border: 1px solid black;"></canvas>
+    </body>
+    <div id="usercounter">Score: 0</div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const canvas = document.getElementById("GameCanvas");
+        usercounter = document.getElementById("usercounter");
+        let usercountertext = document.createElement("p");
+        var foodrect = canvas.getContext("2d");
+        var food_x = 0; var food_y = 0; var score = 0;
+
+        socket.on("Spawn_food_f", (x, y) => {
+            console.log(x, y);
+            food_x = x; food_y = y;
+            foodrect.fillStyle = "rgb(0, 0, 0)";
+            foodrect.fillRect(x, y, 10, 10);
+        });
+
+        canvas.addEventListener("click", function(e) {
+            console.log(e.offsetX, e.offsetY);
+            if ((e.offsetX > food_x) && (e.offsetX < food_x+10) &&
+                (e.offsetY > food_y) && (e.offsetY < food_y+10)) {
+                    score = score + 1;
+                    socket.emit("Food_Clicked", score, food_x, food_y);
+                }
+        }, false);
+    </script>
+</html>
