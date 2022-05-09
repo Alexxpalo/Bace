@@ -5,34 +5,45 @@
     <body>
         <canvas id="GameCanvas" width="1400" height="750" style="border: 1px solid black;"></canvas>
     </body>
-    <div id="score_board">Score: 0</div>
+    <div id="score_board_own">Your score: 0</div> <div id="score_board_mp">HIGHEST SCORE: 0 ID: <BR>SECOND HIGHEST: 0 ID: <BR>THIRD HIGHEST: 0 ID:</div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         const canvas = document.getElementById("GameCanvas");
-        score_board = document.getElementById("score_board");
+        score_board_own = document.getElementById("score_board_own"); score_board_mp = document.getElementById("score_board_mp");
         let score_txt = document.createElement("p");
         var foodrect = canvas.getContext("2d");
-        var food_x = 0; var food_y = 0; var score = 0; var food_oldx = 0; var food_oldy = 0;
+        var food_x = 0; var food_y = 0; var score = 0; var food_oldx = 0; var food_oldy = 0; var first_s = 0; var second_s = 0; var third_s = 0;
 
-        socket.on("Spawn_food_f", (x, y) => {
+        socket.on("Spawn_food_f", (x, y,  food_c_r,  food_c_g,  food_c_b) => {
             console.log(x, y, food_oldx, food_oldy);
             foodrect.clearRect(food_oldx, food_oldy, 50, 50);
             food_x = x; food_y = y;
-            foodrect.fillStyle = "rgb(0, 0, 0)";
+            foodrect.fillStyle = "rgb(" + food_c_r + ", "  + food_c_g + ", " + food_c_b + ")";
             foodrect.fillRect(x, y, 50, 50);
             food_oldx = x; food_oldy = y;
         }); 
-        socket.on("Delete_Food", (socketid, score, food_x, food_y) => {
+        socket.on("Delete_Food", (socketid, score, food_x, food_y, scores, slen) => {
             console.log(socketid, score, food_x, food_y);
-            foodrect.clearRect(food_oldx, food_oldy, 50, 50);
-            if (socket.id === socketid){
-                score_board.style.color = "#3bf563";
-                score_board.innerHTML = socketid + " " + score;
-            } else {
-                score_board.style.color = "#f53b3b";
-                score_board.innerHTML = socketid + " " + score;
+
+            for (let i = 0; i < scores.length; i++) {
+                if (scores[i][0] === socket.id) {
+                    scores[i][1]++;
+                    //console.log(socket.id + " Your score " + scores[i][1]);
+
+                    socket.emit("Add_Score_To_Arr", i);
+                }
+                score_board_own.innerHTML = "Your score: " + scores[i][1] + " (your id: " + socket.id + ")";
             }
+
+            console.log(scores.sort((a, b) => a[1]-b[1]));
+            console.log(scores.length-1);
+            first_s = scores.length-1; second_s = scores.length-2; third_s = scores.length-3; 
+            score_board_mp.innerHTML = "HIGHEST SCORE: " + scores[first_s][1] + " ID: " + scores[first_s][0] + "<BR>SECOND HIGHEST: " +  scores[second_s][1] + " ID: " + scores[second_s][0] + "<BR>THIRD HIGHEST: " +  scores[third_s][1] + " ID: " + scores[third_s][0];
+
+
+            foodrect.clearRect(food_oldx, food_oldy, 50, 50);
+
             food_x, food_y = null;
         });
 
